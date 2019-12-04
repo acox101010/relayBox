@@ -19,7 +19,7 @@ Keypad keypad = Keypad( makeKeymap(keys), rowPins, colPins, ROWS, COLS ); //init
 char entryInt[8]; //array to store user cycle count
 char timInt[8]; // array to store cycle time (on/off)milliseconds
 char incomingByte = '*'; //character to cancel test
-char outgoingByte = 'd';
+char outgoingByte = 'D';
 char can_key; //created global variable for cancelling test
 char waiting; //waits for keypad press
 
@@ -213,7 +213,7 @@ void rest() {
   Serial.println("reset entryInt");
 
   for ( int j = 0; j < sizeof(timInt);  ++j )
-    entryInt[j] = (char)0;
+    timInt[j] = (char)0;
   Serial.println("reset timeInt");
   Serial.println("im done");
   z = nums; //sets increment equal to test completion
