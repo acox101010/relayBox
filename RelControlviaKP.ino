@@ -19,7 +19,6 @@ Keypad keypad = Keypad( makeKeymap(keys), rowPins, colPins, ROWS, COLS ); //init
 char entryInt[8]; //array to store user cycle count
 char timInt[8]; // array to store cycle time (on/off)milliseconds
 char incomingByte = '*'; //character to cancel test
-char outgoingByte = 'D';
 char can_key; //created global variable for cancelling test
 char waiting; //waits for keypad press
 
@@ -140,9 +139,37 @@ void loop() {//loop to capture cycle count user input
     lcd.setCursor(0, 1);
     lcd.print(seconds / 1000);
     for (z = 1; z <= nums; z = z + 1) {
+      can_key = keypad.getKey(); //capture keypad key
+      if (can_key) {
+        switch (can_key)
+        {
+          case '*':
+            checkSt();
+            break;
+          case 'D':
+            orig();
+            break;
+          default:
+            Serial.println(can_key);
+        }
+      }
       digitalWrite(relayPin_1, HIGH);
       digitalWrite(relayPin_2, LOW);
       delay(seconds);
+      can_key = keypad.getKey(); //capture keypad key
+      if (can_key) {
+        switch (can_key)
+        {
+          case '*':
+            checkSt();
+            break;
+          case 'D':
+            orig();
+            break;
+          default:
+            Serial.println(can_key);
+        }
+      }
       digitalWrite(relayPin_1, LOW);
       digitalWrite(relayPin_2, HIGH);
       delay(seconds);
@@ -151,12 +178,15 @@ void loop() {//loop to capture cycle count user input
       lcd.print("Testing");
       lcd.setCursor(0, 1);
       lcd.print(String("Cycle: ") + String(z));
-      can_key = keypad.getKey();
+      can_key = keypad.getKey(); //capture keypad key
       if (can_key) {
         switch (can_key)
         {
           case '*':
             checkSt();
+            break;
+          case 'D':
+            orig();
             break;
           default:
             Serial.println(can_key);
@@ -182,7 +212,7 @@ void testComp() {
   digitalWrite(relayPin_2, HIGH);
   testloopid = 0;
   timeloopid = 0;
-  delay(2000);
+  delay(500);
   Serial.println("comp loop completed");
   Serial.println(entryInt);
   Serial.println(timInt);
@@ -201,10 +231,22 @@ void checkSt() {
   digitalWrite(relayPin_2, HIGH);
   testloopid = 0;
   timeloopid = 0;
-  delay(2000);
+  delay(500);
   Serial.println("cancel loop completed");
   rest();
 }
+
+//+++++++++++++++++++++++function to lcd print original values+++++++++++++++++++++++++++++++
+void orig() {
+  Serial.println("In values loop");
+  lcd.clear();
+  lcd.setCursor(0, 0);
+  lcd.print(nums);
+  lcd.setCursor(0, 1);
+  lcd.print(seconds / 1000);
+  Serial.println("leaving values loop");
+}
+
 
 //+++++++++++++++++++++++function to reset all array values++++++++++++++++++++++++++++++++++
 void rest() {
@@ -216,5 +258,5 @@ void rest() {
     timInt[j] = (char)0;
   Serial.println("reset timeInt");
   Serial.println("im done");
-  z = nums; //sets increment equal to test completion
+  z = nums; //sets increment equal to test completion count
 }
