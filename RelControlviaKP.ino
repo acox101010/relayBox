@@ -31,6 +31,8 @@ int testloopid = 0; //checks the state of the program we are in for cycles
 int timeloopid = 0; //checks the state of the program we are in for time
 int relayPin_1 = 5; //digital output to the first relay
 int relayPin_2 = 6; //digital output to the second relay
+int redLED = 10;
+int greenLED = 11;
 
 //====================Start of Program - Setup=======================================///
 void setup() {
@@ -42,8 +44,12 @@ void setup() {
   lcd.print("Starting Up"); //prints to lcd
   pinMode(relayPin_1, OUTPUT);
   pinMode(relayPin_2, OUTPUT);
+  pinMode(redLED, OUTPUT);
+  pinMode(greenLED, OUTPUT);
   digitalWrite(relayPin_1, HIGH);
   digitalWrite(relayPin_2, HIGH);
+  digitalWrite(redLED, LOW);
+  digitalWrite(greenLED, HIGH);
   delay(1000);
   lcd.clear();
   lcd.setCursor(0, 0);
@@ -66,6 +72,8 @@ void loop() {//loop to capture cycle count user input
       Serial.println("Canceled");
       lcd.setCursor(0, 0);
       lcd.print("Test Canceled");
+      for ( int i = 0; i < sizeof(entryInt);  ++i ) //added for clearing array and setting index to 0
+        entryInt[i] = (char)0;
     } else if (key != '#') {
       entryInt[i] = key;
       i++;
@@ -111,6 +119,12 @@ void loop() {//loop to capture cycle count user input
         lcd.setCursor(0, 1);
         lcd.print(timInt);
         Serial.println(timInt);
+      } else if (time_key == '0') {
+        j = 0;
+        time_key = 0;
+        lcd.clear();
+        lcd.setCursor(0,1);
+        lcd.print("invalid entry");
       }
       else {
         Serial.println("");
@@ -138,6 +152,8 @@ void loop() {//loop to capture cycle count user input
     lcd.print(nums);
     lcd.setCursor(0, 1);
     lcd.print(seconds / 1000);
+    digitalWrite(redLED, HIGH);
+    digitalWrite(greenLED, LOW);
     for (z = 1; z <= nums; z = z + 1) {
       can_key = keypad.getKey(); //capture keypad key
       if (can_key) {
@@ -155,6 +171,8 @@ void loop() {//loop to capture cycle count user input
       }
       digitalWrite(relayPin_1, HIGH);
       digitalWrite(relayPin_2, LOW);
+      digitalWrite(redLED, HIGH);
+      digitalWrite(greenLED, LOW);
       delay(seconds);
       can_key = keypad.getKey(); //capture keypad key
       if (can_key) {
@@ -172,6 +190,8 @@ void loop() {//loop to capture cycle count user input
       }
       digitalWrite(relayPin_1, LOW);
       digitalWrite(relayPin_2, HIGH);
+      digitalWrite(redLED, HIGH);
+      digitalWrite(greenLED, LOW);
       delay(seconds);
       lcd.clear();
       lcd.setCursor(0, 0);
@@ -210,6 +230,8 @@ void testComp() {
   lcd.print(z);
   digitalWrite(relayPin_1, HIGH);
   digitalWrite(relayPin_2, HIGH);
+  digitalWrite(redLED, LOW);
+  digitalWrite(greenLED, HIGH);
   testloopid = 0;
   timeloopid = 0;
   delay(500);
@@ -229,6 +251,8 @@ void checkSt() {
   lcd.print(z);
   digitalWrite(relayPin_1, HIGH);
   digitalWrite(relayPin_2, HIGH);
+  digitalWrite(redLED, LOW);
+  digitalWrite(greenLED, HIGH);
   testloopid = 0;
   timeloopid = 0;
   delay(500);
