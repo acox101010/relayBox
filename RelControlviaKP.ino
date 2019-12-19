@@ -19,6 +19,7 @@ Keypad keypad = Keypad( makeKeymap(keys), rowPins, colPins, ROWS, COLS ); //init
 char entryInt[8]; //array to store user cycle count
 char timInt[8]; // array to store cycle time (on/off)milliseconds
 char incomingByte = '*'; //character to cancel test
+char restartByte = 'B'; //character to restart parameter entry
 char can_key; //created global variable for cancelling test
 char waiting; //waits for keypad press
 
@@ -99,19 +100,28 @@ void loop() {//loop to capture cycle count user input
   if (testloopid == 1) {
     lcd.setCursor(0, 0);
     lcd.print("Enter On/Off");
-    //Serial.println("Enter on off loop");
     char time_key = keypad.getKey();
     if (time_key) {
+      lcd.clear();
       lcd.setCursor(0, 0);
       lcd.print("Enter On/Off"); //prints to lcd
       Serial.println("Enter on/off");
       if (time_key == '*') {
         j = 0;
         time_key = 0;
+        lcd.clear();
         Serial.println("");
         Serial.println("Canceled");
         lcd.setCursor(0, 0);
         lcd.print("Test Canceled");
+        delay(300);
+        lcd.clear();
+        for ( int j = 0; j < sizeof(timInt);  ++j ) //added for clearing array and setting index to 0
+          timInt[j] = (char)0;
+        for ( int i = 0; i < sizeof(entryInt);  ++i ) //added for clearing array and setting index to 0
+          entryInt[i] = (char)0;
+        testloopid = 0;
+        setup(); //Re-initiate program
       } else if (time_key != '#') {
         timInt[j] = time_key;
         j++;
@@ -119,12 +129,6 @@ void loop() {//loop to capture cycle count user input
         lcd.setCursor(0, 1);
         lcd.print(timInt);
         Serial.println(timInt);
-      } else if (time_key == '0') {
-        j = 0;
-        time_key = 0;
-        lcd.clear();
-        lcd.setCursor(0,1);
-        lcd.print("invalid entry");
       }
       else {
         Serial.println("");
@@ -144,14 +148,14 @@ void loop() {//loop to capture cycle count user input
   if (testloopid == 1 && timeloopid == 1) {
     nums = atoi(entryInt);
     seconds = atoi(timInt);
-    seconds = seconds * 1000; //converts milliseconds to seconds
+    seconds = seconds; //converts milliseconds to seconds
     Serial.println(nums);
     Serial.println(seconds);
     lcd.clear();
     lcd.setCursor(0, 0);
     lcd.print(nums);
     lcd.setCursor(0, 1);
-    lcd.print(seconds / 1000);
+    lcd.print(seconds);
     digitalWrite(redLED, HIGH);
     digitalWrite(greenLED, LOW);
     for (z = 1; z <= nums; z = z + 1) {
