@@ -17,19 +17,23 @@ LiquidCrystal_I2C lcd = LiquidCrystal_I2C(0x27, 16, 2); //LCD address after scan
 Keypad keypad = Keypad( makeKeymap(keys), rowPins, colPins, ROWS, COLS ); //initiates constructors
 
 char entryInt[8]; //array to store user cycle count
-char timInt[8]; // array to store cycle time (on/off)milliseconds
+char timInt[8]; // array to store cycle time (on) milliseconds
+char timOff[8]; // array to store cycle time (off) milliseconds
 char incomingByte = '*'; //character to cancel test
 char restartByte = 'B'; //character to restart parameter entry
 char can_key; //created global variable for cancelling test
 char waiting; //waits for keypad press
 
 int nums; //variable to convert char array to integer for cycle count
-int seconds; //variable to convert char array to integer for cycle time
+int seconds; //variable to convert char array to integer for cycle time On
+int secondsOff; //variable to convert char array to integer for cycle time Off
 int i = 0; //integer counter for cycle count
-int j = 0; //integer counter for time count
+int j = 0; //integer counter for time count (on)
+int x = 0; //integer counter for time count (off)
 int z = 1; //integer counter for relay loop
 int testloopid = 0; //checks the state of the program we are in for cycles
 int timeloopid = 0; //checks the state of the program we are in for time
+int timeloopid_2 = 0;
 int relayPin_1 = 5; //digital output to the first relay
 int relayPin_2 = 6; //digital output to the second relay
 int redLED = 10;
@@ -68,7 +72,9 @@ void loop() {//loop to capture cycle count user input
     if (key == '*') {
       i = 0;
       key = 0;
-      testloopid = 0; //initial state of program
+      testloopid = 0; //initial state of program for variables
+      timeloopid = 0;
+      timeloopid_2 = 0;
       Serial.println("");
       Serial.println("Canceled");
       lcd.setCursor(0, 0);
@@ -94,18 +100,19 @@ void loop() {//loop to capture cycle count user input
       lcd.clear();
       Serial.println("Num loop complete");
       testloopid = 1; //sets variable to 1 once entryInt captured from user
+
     }
   }
-  //loop to capture cycle time
+  //++++++loop to capture ON cycle time+++++++++++++++++++++++++++++++++++++++++
   if (testloopid == 1) {
     lcd.setCursor(0, 0);
-    lcd.print("Enter On/Off");
+    lcd.print("Enter On");
     char time_key = keypad.getKey();
     if (time_key) {
       lcd.clear();
       lcd.setCursor(0, 0);
-      lcd.print("Enter On/Off"); //prints to lcd
-      Serial.println("Enter on/off");
+      lcd.print("Enter On"); //prints to lcd
+      Serial.println("Enter on");
       if (time_key == '*') {
         j = 0;
         time_key = 0;
@@ -121,6 +128,8 @@ void loop() {//loop to capture cycle count user input
         for ( int i = 0; i < sizeof(entryInt);  ++i ) //added for clearing array and setting index to 0
           entryInt[i] = (char)0;
         testloopid = 0;
+        timeloopid = 0;
+        timeloopid_2 = 0;
         setup(); //Re-initiate program
       } else if (time_key != '#') {
         timInt[j] = time_key;
@@ -136,26 +145,87 @@ void loop() {//loop to capture cycle count user input
         time_key = 0;
         lcd.clear();
         lcd.setCursor(0, 0);
-        lcd.print("On/Off Captured");
-        Serial.println("On/Off Captured");
+        lcd.print("On Captured");
+        Serial.println("On Captured");
         delay(1000);
-        timeloopid = 1; //sets variable to 1 once timInt captured from user
+        lcd.clear();
+        timeloopid = 1; //sets variable to 1 after timInt captured from user
+        timeloopid_2 = 1;
+      }
+    }
+  }
+
+  //++++++loop to capture OFF cycle time+++++++++++++++++++++++++++++++++++++++++
+  while (testloopid == 1 && timeloopid_2 == 1) {
+    lcd.setCursor(0, 0);
+    lcd.print("Enter Off");
+    char time_key_2 = keypad.getKey();
+    if (time_key_2) {
+      lcd.clear();
+      lcd.setCursor(0, 0);
+      lcd.print("Enter Off"); //prints to lcd
+      Serial.println("Enter Off");
+      if (time_key_2 == '*') {
+        x = 0;
+        time_key_2 = 0;
+        lcd.clear();
+        Serial.println("");
+        Serial.println("Canceled");
+        lcd.setCursor(0, 0);
+        lcd.print("Test Canceled");
+        delay(300);
+        lcd.clear();
+        for ( int j = 0; j < sizeof(timInt);  ++j ) //added for clearing On time array and setting index to 0
+          timInt[j] = (char)0;
+        for ( int x = 0; x < sizeof(timOff);  ++x ) //added for clearing Off time array and setting index to 0
+          timOff[x] = (char)0;
+        for ( int i = 0; i < sizeof(entryInt);  ++i ) //added for clearing array and setting index to 0
+          entryInt[i] = (char)0;
+        testloopid = 0;
+        timeloopid = 0;
+        timeloopid_2 = 0;
+        setup(); //Re-initiate program
+      } else if (time_key_2 != '#') {
+        timOff[x] = time_key_2;
+        x++;
+        Serial.println(time_key_2);
+        lcd.setCursor(0, 1);
+        lcd.print(timOff);
+        Serial.println(timOff);
+      }
+      else {
+        Serial.println("");
+        x = 0;
+        time_key_2 = 0;
+        lcd.clear();
+        lcd.setCursor(0, 0);
+        lcd.print("Off Captured");
+        Serial.println("Off Captured");
+        delay(1000);
+        lcd.clear();
+        testloopid = 2;
+        timeloopid_2 = 2; //sets variable to 2 after timInt captured from user
       }
     }
   }
 
   //loop to start execution of relay program
-  if (testloopid == 1 && timeloopid == 1) {
+  if (testloopid == 2 && timeloopid_2 == 2) {
     nums = atoi(entryInt);
     seconds = atoi(timInt);
-    seconds = seconds; //converts milliseconds to seconds
+    secondsOff = atoi(timOff);
+    seconds = seconds; //Use to convert milliseconds to seconds if requested
+    secondsOff = secondsOff; //Use to convert milliseconds to seconds if requested
     Serial.println(nums);
     Serial.println(seconds);
+    Serial.println(secondsOff);
     lcd.clear();
     lcd.setCursor(0, 0);
     lcd.print(nums);
     lcd.setCursor(0, 1);
     lcd.print(seconds);
+    lcd.setCursor(7, 1);
+    lcd.print(secondsOff);
     digitalWrite(redLED, HIGH);
     digitalWrite(greenLED, LOW);
     for (z = 1; z <= nums; z = z + 1) {
@@ -177,7 +247,7 @@ void loop() {//loop to capture cycle count user input
       digitalWrite(relayPin_2, LOW);
       digitalWrite(redLED, HIGH);
       digitalWrite(greenLED, LOW);
-      delay(seconds);
+      delay(seconds); //On time defined by user
       can_key = keypad.getKey(); //capture keypad key
       if (can_key) {
         switch (can_key)
@@ -196,7 +266,7 @@ void loop() {//loop to capture cycle count user input
       digitalWrite(relayPin_2, HIGH);
       digitalWrite(redLED, HIGH);
       digitalWrite(greenLED, LOW);
-      delay(seconds);
+      delay(secondsOff);  //Off time defined by user
       lcd.clear();
       lcd.setCursor(0, 0);
       lcd.print("Testing");
@@ -238,10 +308,12 @@ void testComp() {
   digitalWrite(greenLED, HIGH);
   testloopid = 0;
   timeloopid = 0;
+  timeloopid_2 = 0;
   delay(500);
   Serial.println("comp loop completed");
   Serial.println(entryInt);
   Serial.println(timInt);
+  Serial.println(timOff);
   rest();
 }
 
@@ -259,6 +331,7 @@ void checkSt() {
   digitalWrite(greenLED, HIGH);
   testloopid = 0;
   timeloopid = 0;
+  timeloopid_2 = 0;
   delay(500);
   Serial.println("cancel loop completed");
   rest();
@@ -281,7 +354,9 @@ void rest() {
   for ( int i = 0; i < sizeof(entryInt);  ++i )
     entryInt[i] = (char)0;
   Serial.println("reset entryInt");
-
+  for ( int x = 0; x < sizeof(timOff);  ++x ) //added for clearing Off time array and setting index to 0
+    timOff[x] = (char)0;
+  Serial.println("reset timOff");
   for ( int j = 0; j < sizeof(timInt);  ++j )
     timInt[j] = (char)0;
   Serial.println("reset timeInt");
